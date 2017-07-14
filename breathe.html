@@ -1,0 +1,97 @@
+<html>
+<style>
+#breathe {
+  border:1px solid #4d4e53
+}
+</style>
+
+<canvas id="breathe" width="400" height="400"></canvas>
+
+<script type="text/javascript">
+function drawCircle(ctx, cenx, ceny, radius, fill) {
+  ctx.beginPath();
+  ctx.ellipse(cenx, ceny, radius, radius, 0, 0, Math.PI * 2);
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  ctx.stroke();
+}
+
+function epochMillis() {
+  return (new Date()).getTime();
+}
+
+function sum(stages) {
+  var sum = 0;
+  for (i = 0; i < stages.length; i++) {
+    sum += stages[i];
+  }
+  return sum;
+}
+
+
+startTime = epochMillis();
+// Uncomment if we should not auto start on load.
+// startTime = 0;
+canv=document.getElementById("breathe");
+ctx=canv.getContext("2d");
+CENX = canv.width / 2;
+CENY = canv.height / 2;
+INNER = 40;
+OUTER = 190;
+BLUE = 'lightblue';
+RED = 'pink';
+cycleTimeMillis = 16000;
+cycleStages = [
+  4,   // breatheIn
+  4,   // holdIn 
+  6,   // breatheOut
+  2    // holdOut
+];
+
+
+function redraw() {
+  // Do not draw if not running
+  if (startTime == 0) {
+    return;
+  }
+
+  ctx.fillStyle="white";
+  ctx.fillRect(0,0,canv.width,canv.height);
+  // Find where in the cycle we are
+  numCyclesCompleted = Math.floor((epochMillis() - startTime) / cycleTimeMillis);
+  cyclePosMillis = (epochMillis() - startTime) % cycleTimeMillis;
+
+  cyclePieceSize = cycleTimeMillis / sum(cycleStages);
+
+  for (i = 0; i < cycleStages.length; i++) {
+    if ((cyclePosMillis / cyclePieceSize) < cycleStages[i]) {
+      incremental = (OUTER - INNER) * cyclePosMillis / (cyclePieceSize * cycleStages[i]);
+      if (i == 0) {
+	radius = INNER + incremental;
+      } else if (i == 1) {
+	radius = OUTER;
+      } else if (i == 2) {
+	radius = OUTER - incremental;
+      } else if (i == 3) {
+	radius = INNER;
+      }
+
+      drawCircle(ctx, CENX, CENY, radius, BLUE);
+      break;
+    }
+    cyclePosMillis -= (cyclePieceSize * cycleStages[i]);
+  }
+
+  // Draw the outer circle to show how far we go.
+  drawCircle(ctx, CENX, CENY, OUTER, null);
+  // Draw the inner circle to show how far we shrink.
+  drawCircle(ctx, CENX, CENY, INNER, RED);
+  ctx.fillStyle = 'black';
+  ctx.fillText('cycle #' + numCyclesCompleted, 10, 10);
+}
+
+setInterval(redraw, 100);
+</script>
+</html>
